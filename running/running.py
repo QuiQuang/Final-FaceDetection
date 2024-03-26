@@ -8,12 +8,12 @@ root_dir = os.getcwd()
 # Load Face Detection Model
 face_cascade = cv2.CascadeClassifier("./model/haarcascade_frontalface_default.xml")
 # Load Anti-Spoofing Model graph
-json_file = open("./model/Test.json", "r")
+json_file = open("./model/build.json", "r")
 loaded_model_json = json_file.read()
 json_file.close()
 model = model_from_json(loaded_model_json)
 # load antispoofing model weights
-model.load_weights("./model_weights_next/model_last_22-0.958165.h5")
+model.load_weights("./model_weights/model-6.h5")
 print("Model loaded from disk")
 
 video = cv2.VideoCapture(0)
