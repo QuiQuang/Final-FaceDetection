@@ -1,6 +1,9 @@
 import cv2
-from tensorflow.keras.preprocessing.image import img_to_array
 import os
+
+TF_ENABLE_ONEDNN_OPTS = 0
+
+from tensorflow.keras.preprocessing.image import img_to_array
 import numpy as np
 from tensorflow.keras.models import model_from_json
 

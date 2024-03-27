@@ -1,4 +1,8 @@
 import sys
+import cv2
+import numpy as np
+import os
+
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -12,22 +16,15 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QSizePolicy,
 )
-from PyQt5.QtCore import Qt, QTimer, QFile, QTextStream
-from PyQt5.QtGui import QImage, QPixmap, QRadialGradient, QColor
-import cv2
-import numpy as np
+from PyQt5.QtCore import Qt, QTimer, QFile, QTextStream, QSize
+from PyQt5.QtGui import QImage, QPixmap, QRadialGradient, QColor, QIcon
+
+from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow.keras.models import model_from_json
 
 # Global
 camera_width = 1200
 camera_height = 900
-
-button_style = "\
-                    {QPushButton {position: relative; font-size: 17px; text-transform: uppercase; text-decoration: none; padding: 1em 2.5em; display: inline-block; border-radius: 6em; transition: all .2s; border: none; font-family: inherit; font-weight: 500; color: black; background-color: white;}\
-                    QPushButton:hover {transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);}\
-                    QPusgButton:active {transform: translateY(-1px); box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);}\
-                    QPushButton:after {display: inline-block; height: 100%; width: 100%; border-radius: 100px; position: absolute; top: 0; left: 0; z-index: -1; transition: all .4s; background-color: #fff;}\
-                    QPushButton:hover::after {transform: scaleX(1.4) scaleY(1.6); opacity: 0;}\
-                "
 
 
 class HomePage(QWidget):
@@ -66,12 +63,32 @@ class CameraPage(QWidget):
         layout.setStretch(1, 1)
 
         # Tạo button để bắt đầu và dừng camera
-        self.control_button = QPushButton("START")
+        icon = QIcon("image/camera-on.png")
+        self.control_button = QPushButton()
+        self.control_button.setIcon(icon)
         info_layout.addWidget(self.control_button)
         self.control_button.clicked.connect(self.toggle_camera)
-        self.control_button.setStyleSheet(button_style)
+        self.control_button.setStyleSheet(
+            "QPushButton {display: inline-block; outline: 0; text-align: center; cursor: pointer; height: 34px; padding: 0 13px; vertical-align: top; border-radius: 3px; border: 2px solid transparent; transition: all .3s ease; background: #fff; border-color: #9B9B9B; color: #000; font-weight: 600; text-transform: uppercase; line-height: 16px; font-size: 11px;}\
+            QPushButton:hover {background: #e8e8e8; color: #3d3d3d;}"
+        )
         self.control_button.setFixedSize(100, 50)
+        self.control_button.setIconSize(QSize(50, 30))
         info_layout.setAlignment(Qt.AlignCenter)
+
+        # Init model detection
+        self.face_cascade = cv2.CascadeClassifier(
+            "./model/haarcascade_frontalface_default.xml"
+        )
+
+        # Load Anti-Spoofing Model graph
+        json_file = open("./model/build.json", "r")
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.model = model_from_json(loaded_model_json)
+        self.model.load_weights("./model_weights/model-6.h5")
+
+        print("Model loaded from disk")
 
     def toggle_camera(self):
         if not self.camera_started:
@@ -88,7 +105,8 @@ class CameraPage(QWidget):
             self.timer.start(30)
             # Return
             self.camera_started = True
-            self.control_button.setText("STOP")
+            icon = QIcon("image/camera-off.png")
+            self.control_button.setIcon(icon)
 
     def stop_camera(self):
         # Dừng timer nếu đang hoạt động
@@ -99,7 +117,8 @@ class CameraPage(QWidget):
             self.cap.release()
         # Return
         self.camera_started = False
-        self.control_button.setText("START")
+        icon = QIcon("image/camera-on.png")
+        self.control_button.setIcon(icon)
         self.show_black_camera()
 
     def show_black_camera(self):
@@ -118,13 +137,48 @@ class CameraPage(QWidget):
         ret, frame = self.cap.read()
 
         if ret:
-            # Chuyển đổi frame sang định dạng RGB
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
+
+            for x, y, w, h in faces:
+                face = frame[y - 5 : y + h + 5, x - 5 : x + w + 5]
+                resized_face = cv2.resize(face, (160, 160))
+                resized_face = resized_face.astype("float") / 255.0
+                resized_face = img_to_array(resized_face)
+                resized_face = np.expand_dims(resized_face, axis=0)
+                preds = self.model.predict(resized_face)[0]
+                print(preds)
+                if preds > 0.5:
+                    label = "Spoof"
+                    cv2.putText(
+                        frame,
+                        label,
+                        (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 0, 255),
+                        2,
+                    )
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                else:
+                    label = "Real"
+                    cv2.putText(
+                        frame,
+                        label,
+                        (x, y - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (0, 255, 0),
+                        2,
+                    )
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
             # Chuyển đổi frame thành QImage
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = QImage(
-                frame_rgb.data,
-                frame_rgb.shape[1],
-                frame_rgb.shape[0],
+                frame.data,
+                frame.shape[1],
+                frame.shape[0],
                 QImage.Format_RGB888,
             )
             # Hiển thị hình ảnh trên QLabel
