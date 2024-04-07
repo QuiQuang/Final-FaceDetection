@@ -382,7 +382,7 @@ class CheatDetectionPage(QWidget):
         # Init
         self.camera_height = 930
         self.camera_width = 1100
-        self.popup_shown = False
+        self.popup_shown = True
 
         # Init model
         self.model = mp.solutions.face_mesh
@@ -481,6 +481,7 @@ class CheatDetectionPage(QWidget):
             self.camera_started = True
             icon = QIcon("image/camera-off.png")
             self.control_button.setIcon(icon)
+            self.popup_shown = True
 
     def stop_camera(self):
         # Dừng timer nếu đang hoạt động
@@ -494,6 +495,7 @@ class CheatDetectionPage(QWidget):
         icon = QIcon("image/camera-on.png")
         self.control_button.setIcon(icon)
         self.show_black_camera()
+        self.popup_shown = False
 
     def show_black_camera(self):
         # Hiển thị màn hình đen
@@ -678,22 +680,20 @@ class CheatDetectionPage(QWidget):
 
     def reset_timer2(self):
         self.timer2.stop()
-        self.popup_shown = False
+        self.popup_shown = True
         self.timer2.start()
 
     def show_popup(self):
-        if not self.popup_shown and (
-            self.face_direct != "CENTER"
-            or (self.eye_position != "CENTER" and self.eye_position_left != "CENTER")
-        ):
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setWindowTitle("Warning")
-            msg.setText("Please pay attention to the screen!")
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec_()
-            self.popup_shown = True
-            self.reset_timer2()
+        if self.popup_shown == True and self.face_direct != "CENTER":
+            if self.eye_position != "CENTER" or self.eye_position_left != "CENTER":
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Warning")
+                msg.setText("Please pay attention to the screen!")
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.exec_()
+                self.popup_shown = False
+                self.reset_timer2()
 
 
 # Main page

@@ -133,7 +133,7 @@ def pixelCounter(first_piece, second_piece, third_piece):
         pos_eye = "LEFT"
         color = [utils.GRAY, utils.YELLOW]
     else:
-        pos_eye = "Closed"
+        pos_eye = "CLOSED"
         color = [utils.GRAY, utils.YELLOW]
     return pos_eye, color
 
