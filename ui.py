@@ -231,31 +231,31 @@ class CameraPage(QWidget):
         layout.addWidget(self.info_container)
         layout.setStretch(1, 1)
 
-        # # Tạo button để bắt đầu và dừng camera
-        # icon = QIcon("image/camera-on.png")
-        # self.control_button = QPushButton()
-        # self.control_button.setIcon(icon)
-        # info_layout_button.addWidget(self.control_button)
-        # self.control_button.clicked.connect(self.toggle_camera)
-        # self.control_button.setStyleSheet(
-        #     "QPushButton {outline: 0; text-align: center; height: 34px; padding: 0 13px; vertical-align: top; border-radius: 3px; border: 2px solid transparent; background: #fff; border-color: #9B9B9B; color: #000; font-weight: 600; text-transform: uppercase; line-height: 16px; font-size: 11px;}\
-        #     QPushButton:hover {background: #e8e8e8; color: #3d3d3d;}"
-        # )
-        # self.control_button.setFixedSize(250, 50)
-        # self.control_button.setIconSize(QSize(50, 30))
-        # info_layout_button.setAlignment(Qt.AlignCenter)
+        # Tạo button để bắt đầu và dừng camera
+        icon = QIcon("image/camera-on.png")
+        self.control_button = QPushButton()
+        self.control_button.setIcon(icon)
+        info_layout_button.addWidget(self.control_button)
+        self.control_button.clicked.connect(self.toggle_camera)
+        self.control_button.setStyleSheet(
+            "QPushButton {outline: 0; text-align: center; height: 34px; padding: 0 13px; vertical-align: top; border-radius: 3px; border: 2px solid transparent; background: #fff; border-color: #9B9B9B; color: #000; font-weight: 600; text-transform: uppercase; line-height: 16px; font-size: 11px;}\
+            QPushButton:hover {background: #e8e8e8; color: #3d3d3d;}"
+        )
+        self.control_button.setFixedSize(250, 50)
+        self.control_button.setIconSize(QSize(50, 30))
+        info_layout_button.setAlignment(Qt.AlignCenter)
 
-        # # Init model detection
-        # self.face_cascade = cv2.CascadeClassifier(
-        #     "model/haarcascade_frontalface_default.xml"
-        # )
+        # Init model detection
+        self.face_cascade = cv2.CascadeClassifier(
+            "model/haarcascade_frontalface_default.xml"
+        )
 
-        # # Load Anti-Spoofing Model graph
-        # json_file = open("model/build.json", "r")
-        # loaded_model_json = json_file.read()
-        # json_file.close()
-        # self.model = model_from_json(loaded_model_json)
-        # self.model.load_weights("model_weights/model-6.h5")
+        # Load Anti-Spoofing Model graph
+        json_file = open("model/build.json", "r")
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.model = model_from_json(loaded_model_json)
+        self.model.load_weights("model_weights/model-6.h5")
 
     def toggle_camera(self):
         if not self.camera_started:
@@ -536,26 +536,26 @@ class CheatDetectionPage(QWidget):
                     self.ratio = add_function.blinkRatio(
                         frame, mesh_coords, RIGHT_EYE, LEFT_EYE
                     )
-                    utils.colorBackgroundText(
-                        frame,
-                        f"Ratio : {round(self.ratio,2)}",
-                        FONTS,
-                        0.7,
-                        (30, 100),
-                        2,
-                        utils.PINK,
-                        utils.YELLOW,
-                    )
+                    # utils.colorBackgroundText(
+                    #     frame,
+                    #     f"Ratio : {round(self.ratio,2)}",
+                    #     FONTS,
+                    #     0.7,
+                    #     (30, 100),
+                    #     2,
+                    #     utils.PINK,
+                    #     utils.YELLOW,
+                    # )
 
                     # Tính toán lên blink
                     if self.ratio > 4.8:
                         self.cef_counter += 1
                         utils.colorBackgroundText(
                             frame,
-                            f"Blink",
+                            f"BLINK",
                             FONTS,
                             1.7,
-                            (int(frame_height / 2), 100),
+                            (int(frame_height / 2) + 40, 100),
                             2,
                             utils.YELLOW,
                             pad_x=6,
@@ -566,14 +566,14 @@ class CheatDetectionPage(QWidget):
                             self.total_blinks += 1
                             self.cef_counter = 0
 
-                    utils.colorBackgroundText(
-                        frame,
-                        f"Total Blinks: {self.total_blinks}",
-                        FONTS,
-                        0.7,
-                        (30, 150),
-                        2,
-                    )
+                    # utils.colorBackgroundText(
+                    #     frame,
+                    #     f"Total Blinks: {self.total_blinks}",
+                    #     FONTS,
+                    #     0.7,
+                    #     (30, 150),
+                    #     2,
+                    # )
 
                     # Lấy thông tin xử lí
                     top_head = mesh_coords[10]
@@ -629,33 +629,33 @@ class CheatDetectionPage(QWidget):
                     self.eye_position, color = add_function.positionEstimator(
                         crop_right
                     )
-                    utils.colorBackgroundText(
-                        frame,
-                        f"R: {self.eye_position}",
-                        FONTS,
-                        1.0,
-                        (40, 220),
-                        2,
-                        color[0],
-                        color[1],
-                        8,
-                        8,
-                    )
+                    # utils.colorBackgroundText(
+                    #     frame,
+                    #     f"R: {self.eye_position}",
+                    #     FONTS,
+                    #     1.0,
+                    #     (40, 220),
+                    #     2,
+                    #     color[0],
+                    #     color[1],
+                    #     8,
+                    #     8,
+                    # )
                     self.eye_position_left, color = add_function.positionEstimator(
                         crop_left
                     )
-                    utils.colorBackgroundText(
-                        frame,
-                        f"L: {self.eye_position_left}",
-                        FONTS,
-                        1.0,
-                        (40, 320),
-                        2,
-                        color[0],
-                        color[1],
-                        8,
-                        8,
-                    )
+                    # utils.colorBackgroundText(
+                    #     frame,
+                    #     f"L: {self.eye_position_left}",
+                    #     FONTS,
+                    #     1.0,
+                    #     (40, 320),
+                    #     2,
+                    #     color[0],
+                    #     color[1],
+                    #     8,
+                    #     8,
+                    # )
                     self.update_info()
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
