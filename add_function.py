@@ -11,13 +11,27 @@ def landmarksDetection(img, results, draw=False):
     # list[(x,y), (x,y)....]
     mesh_coord = [
         (int(point.x * img_width), int(point.y * img_height))
-        for point in results.multi_face_landmarks[0].landmark
+        for point in results.landmark
     ]
     if draw:
         [cv2.circle(img, p, 2, (0, 255, 0), -1) for p in mesh_coord]
 
     # returning the list of tuples for each landmarks
     return mesh_coord
+
+
+# def landmarksDetection(img, results, draw=False):
+#     img_height, img_width = img.shape[:2]
+#     # list[(x,y), (x,y)....]
+#     mesh_coord = [
+#         (int(point.x * img_width), int(point.y * img_height))
+#         for point in results.multi_face_landmarks[0].landmark
+#     ]
+#     if draw:
+#         [cv2.circle(img, p, 2, (0, 255, 0), -1) for p in mesh_coord]
+
+#     # returning the list of tuples for each landmarks
+#     return mesh_coord
 
 
 # Tính toán khoảng cách
@@ -133,7 +147,7 @@ def pixelCounter(first_piece, second_piece, third_piece):
         pos_eye = "LEFT"
         color = [utils.GRAY, utils.YELLOW]
     else:
-        pos_eye = "Closed"
+        pos_eye = "CLOSED"
         color = [utils.GRAY, utils.YELLOW]
     return pos_eye, color
 
@@ -212,3 +226,68 @@ def get_direct_face(face, eye):
                 return "RIGHT"
         else:
             return "CENTER"
+
+
+# Tạo bbox từ mesh
+def create_bbox_from_mesh(mesh_coords):
+    # Lấy tọa độ x và y của tất cả các landmarks
+    all_x = [coord[0] for coord in mesh_coords]
+    all_y = [coord[1] for coord in mesh_coords]
+
+    # Tính toán giá trị tối thiểu và tối đa của các tọa độ x và y
+    min_x = min(all_x)
+    min_y = min(all_y)
+    max_x = max(all_x)
+    max_y = max(all_y)
+
+    # Trả về bounding box (x, y, w, h)
+    return min_x, min_y, max_x - min_x, max_y - min_y
+
+
+# Tính toán IOU
+def calculate_iou(bbox1, bbox2):
+    x1_tl, y1_tl, w1, h1 = bbox1
+    x1_br, y1_br = x1_tl + w1, y1_tl + h1
+
+    x2_tl, y2_tl, w2, h2 = bbox2
+    x2_br, y2_br = x2_tl + w2, y2_tl + h2
+
+    x_tl = max(x1_tl, x2_tl)
+    y_tl = max(y1_tl, y2_tl)
+    x_br = min(x1_br, x2_br)
+    y_br = min(y1_br, y2_br)
+
+    if x_tl > x_br or y_tl > y_br:
+        intersection_area = 0
+    else:
+        intersection_area = (x_br - x_tl) * (y_br - y_tl)
+
+    area_bbox1 = w1 * h1
+    area_bbox2 = w2 * h2
+    union_area = area_bbox1 + area_bbox2 - intersection_area
+    iou = intersection_area / union_area
+    return iou
+
+
+# Tính toán IOU trên mesh
+def calculate_iou_landmarks(landmarks1, landmarks2):
+    landmarks1 = np.array(landmarks1)
+    landmarks2 = np.array(landmarks2)
+
+    # Tính toán bounding box của mỗi khuôn mặt từ tọa độ landmarks
+    bbox1 = [
+        np.min(landmarks1[:, 0]),
+        np.min(landmarks1[:, 1]),
+        np.max(landmarks1[:, 0]),
+        np.max(landmarks1[:, 1]),
+    ]
+    bbox2 = [
+        np.min(landmarks2[:, 0]),
+        np.min(landmarks2[:, 1]),
+        np.max(landmarks2[:, 0]),
+        np.max(landmarks2[:, 1]),
+    ]
+
+    # Tính toán IoU giữa hai bounding box
+    iou = calculate_iou(bbox1, bbox2)
+    return iou
